@@ -7,14 +7,17 @@ export function ReaderBar({
   name,
   name_bn,
   url,
+  siteName,
 }: {
   name: string;
   name_bn?: string | null;
   url: string;
+  /** From Settings → General, so the back button carries the live brand. */
+  siteName?: string;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-3 sm:px-4">
-      <ReaderBackButton />
+      <ReaderBackButton siteName={siteName} />
 
       <div className="flex min-w-0 items-center gap-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}

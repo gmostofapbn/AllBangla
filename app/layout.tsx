@@ -4,6 +4,8 @@ import { Inter, Newsreader, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/lib/site-config";
 import { getSiteSettings } from "@/lib/settings";
+import { canonical, jsonLdGraph, organizationSchema, websiteSchema } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
 import { accentStyle } from "@/lib/utils";
 
 const inter = Inter({
@@ -52,6 +54,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: title, template: `%s · ${name}` },
     description,
     keywords,
+    // Stops the apex/www pair and any ?query variant being indexed as separate
+    // pages, which splits the ranking signal for the brand term.
+    alternates: canonical("/"),
     // A custom favicon replaces app/favicon.ico when one is uploaded.
     ...(s.site_favicon ? { icons: { icon: s.site_favicon, shortcut: s.site_favicon } } : {}),
     ...(s.google_site_verification
@@ -60,6 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       siteName: name,
+      locale: SITE.locale,
       title,
       description,
       url: SITE.url,
@@ -87,6 +93,9 @@ export default async function RootLayout({
       style={accentStyle(s.primary_color)}
     >
       <body className="min-h-full bg-paper text-ink">
+        {/* Identity of the site itself. Present on every page so a brand-name
+            search has an unambiguous organisation to resolve to. */}
+        <JsonLd data={jsonLdGraph(organizationSchema(s), websiteSchema(s))} />
         {children}
 
         {/* Google Analytics */}

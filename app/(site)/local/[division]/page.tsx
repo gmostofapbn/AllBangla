@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
 import { CategoryFilter } from "@/components/site/category-filter";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -23,7 +24,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { division } = await params;
   const category = await getCategory(division);
-  if (!category) return { title: "Division" };
+  if (!category) return {
+    alternates: canonical(`/local/${division}`), title: "Division" };
   return {
     title: `${category.title} Newspapers`,
     description:

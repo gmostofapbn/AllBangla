@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/page-hero";
 import { Converter } from "@/components/converter/converter";
+import { canonical } from "@/lib/seo";
 
 export const metadata: Metadata = {
+  alternates: canonical("/converter"),
   title: "Bangla Converter",
   description:
     "Free Bangla Converter — English to Bangla phonetic typing, Bijoy ⇌ Unicode conversion, and English ⇌ Bangla digit conversion. Runs entirely in your browser.",

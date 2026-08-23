@@ -17,6 +17,9 @@ import { BlogSidebar } from "@/components/site/blog-sidebar";
 import { PostClickBeacon } from "@/components/site/post-click-beacon";
 import { formatDate, isHtmlContent } from "@/lib/utils";
 import { SITE } from "@/lib/site-config";
+import { getSiteSettings } from "@/lib/settings";
+import { JsonLd } from "@/components/site/json-ld";
+import { articleSchema, breadcrumbSchema, canonical, jsonLdGraph } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -34,17 +37,24 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: post.title,
     description: post.excerpt ?? undefined,
-    openGraph: post.cover_image ? { images: [post.cover_image] } : undefined,
+    alternates: canonical(`/blog/${slug}`),
+    openGraph: {
+      type: "article",
+      publishedTime: post.published_at ?? post.created_at,
+      modifiedTime: post.updated_at,
+      ...(post.cover_image ? { images: [post.cover_image] } : {}),
+    },
   };
 }
 
 export default async function PostPage({ params }: Params) {
   const { slug } = await params;
-  const [post, recent, popular, categories] = await Promise.all([
+  const [post, recent, popular, categories, settings] = await Promise.all([
     getPost(slug),
     getRecentPosts(6, slug),
     getPopularPosts(5, slug),
     getCategoriesWithCounts(),
+    getSiteSettings(),
   ]);
   if (!post) notFound();
 
@@ -54,6 +64,26 @@ export default async function PostPage({ params }: Params) {
 
   return (
     <>
+      {/* BlogPosting + breadcrumb: what lets an article show a date and
+          headline in results rather than a bare blue link. */}
+      <JsonLd
+        data={jsonLdGraph(
+          articleSchema({
+            title: post.title,
+            description: post.excerpt,
+            image: post.cover_image,
+            path: `/blog/${post.slug}`,
+            publishedAt: post.published_at ?? post.created_at,
+            updatedAt: post.updated_at,
+            settings,
+          }),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+        )}
+      />
       <ReadingProgress />
       {/* Count this view (non-blocking, once per load). */}
       <PostClickBeacon id={post.id} />

@@ -6,6 +6,7 @@ import { ReaderBar } from "@/components/site/reader-bar";
 import { ClickBeacon } from "@/components/site/click-beacon";
 import { ExternalRedirect } from "@/components/site/external-redirect";
 import { hostname, faviconUrl } from "@/lib/utils";
+import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -13,17 +14,26 @@ type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const outlet = await getOutletByHandle(slug);
+  const [outlet, settings] = await Promise.all([
+    getOutletByHandle(slug),
+    getSiteSettings(),
+  ]);
   if (!outlet) return { title: "Read" };
   return {
     title: outlet.name,
-    description: `Read ${outlet.name} (${hostname(outlet.url)}) on AllNewspaperBangla.`,
+    description: `Read ${outlet.name} (${hostname(outlet.url)}) on ${settings.site_name}.`,
+    // The reader frames someone else's site; it must never compete with the
+    // publisher's own pages in search results.
+    robots: { index: false, follow: true },
   };
 }
 
 export default async function ReadPage({ params }: Params) {
   const { slug } = await params;
-  const outlet = await getOutletByHandle(slug);
+  const [outlet, settings] = await Promise.all([
+    getOutletByHandle(slug),
+    getSiteSettings(),
+  ]);
   if (!outlet) notFound();
 
   // Sites that block embedding: count the click, then send the browser to the
@@ -73,7 +83,12 @@ export default async function ReadPage({ params }: Params) {
   return (
     <div className="flex h-[100dvh] flex-col bg-band">
       <ClickBeacon id={outlet.id} />
-      <ReaderBar name={outlet.name} name_bn={outlet.name_bn} url={outlet.url} />
+      <ReaderBar
+        name={outlet.name}
+        name_bn={outlet.name_bn}
+        url={outlet.url}
+        siteName={settings.site_name}
+      />
       <iframe
         src={outlet.url}
         title={outlet.name}

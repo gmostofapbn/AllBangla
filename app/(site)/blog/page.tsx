@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { getPublishedPosts } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
 import { BlogGrid } from "@/components/site/blog-grid";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 300;
 
 export const metadata: Metadata = {
+  alternates: canonical("/blog"),
   title: "Blog",
   description:
     "News, updates and guides about Bangla newspapers, online portals and media.",

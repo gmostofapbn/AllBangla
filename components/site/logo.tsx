@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/lib/site-config";
 
 /**
  * Site wordmark. Renders the logo uploaded in Settings → General when there is
@@ -10,7 +11,7 @@ export function Logo({
   className,
   compact = false,
   src,
-  name = "AllNewspaperBangla",
+  name = SITE.name,
 }: {
   className?: string;
   compact?: boolean;

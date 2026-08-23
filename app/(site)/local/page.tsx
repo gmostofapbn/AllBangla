@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { getDivisions, getCategory } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
 import { DivisionTiles } from "@/components/site/division-tiles";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: canonical("/local"),
   title: "Local Newspapers by Division",
   description:
     "Regional newspapers across Bangladesh's eight divisions — Dhaka, Mymensingh, Sylhet, Chattogram, Rangpur, Khulna, Rajshahi and Barisal.",

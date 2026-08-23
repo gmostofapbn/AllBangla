@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { getCategory, getOutletsByCategory } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
 import { CategoryFilter } from "@/components/site/category-filter";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: canonical("/epaper"),
   title: "Bangla ePaper Editions",
   description:
     "Digital replica ePaper editions of the leading Bangla daily newspapers — read the printed paper online.",

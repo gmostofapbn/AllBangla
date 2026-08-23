@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
 import { ContentPage } from "@/components/site/content-page";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: canonical("/privacy"),
   title: "Privacy Policy",
   description: "What information this site collects, and how it is used.",
 };

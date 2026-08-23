@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { getAllCategories } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
 import { SubmitForm } from "@/components/site/submit-form";
+import { canonical } from "@/lib/seo";
 
 export const metadata: Metadata = {
+  alternates: canonical("/submit"),
   title: "Submit a Site",
   description:
     "Suggest a Bangla newspaper, online portal, radio station or ePaper for the directory. Submissions are reviewed before publishing.",

@@ -7,6 +7,13 @@ import {
   getDefaultOpenExternal,
 } from "@/lib/queries";
 import { PageHero } from "@/components/site/page-hero";
+import { JsonLd } from "@/components/site/json-ld";
+import {
+  breadcrumbSchema,
+  canonical,
+  collectionSchema,
+  jsonLdGraph,
+} from "@/lib/seo";
 import { CategoryFilter } from "@/components/site/category-filter";
 
 export const revalidate = 3600;
@@ -27,6 +34,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return {
     title: category.title,
     description: category.description ?? undefined,
+    alternates: canonical(`/category/${slug}`),
   };
 }
 
@@ -41,8 +49,29 @@ export default async function CategoryPage({ params }: Params) {
     getDefaultOpenExternal(),
   ]);
 
+  const path = `/category/${slug}`;
+
   return (
     <>
+      {/* Tells Google this page is a list of named outlets, and where it sits
+          in the site hierarchy — both help it surface as a sitelink. */}
+      <JsonLd
+        data={jsonLdGraph(
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: category.title, path },
+          ]),
+          collectionSchema({
+            name: category.title,
+            description: category.description,
+            path,
+            items: outlets.map((o) => ({
+              name: o.name,
+              url: o.url,
+            })),
+          }),
+        )}
+      />
       <PageHero
         title={category.title}
         titleBn={category.title_bn}

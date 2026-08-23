@@ -1,11 +1,18 @@
-/** Global site metadata + static navigation config. */
+/**
+ * Global site metadata + static navigation config.
+ *
+ * These are FALLBACKS only. The live name, description and branding come from
+ * Settings → General/SEO in the admin, so the client can rename the site
+ * without a deploy. Nothing user-facing should hard-code a brand name — that is
+ * what left the old "AllNewspaperBangla" wording on the 404 and reader pages.
+ */
 
 export const SITE = {
-  name: "AllNewspaperBangla",
-  shortName: "ANB",
+  name: "All Bangla Paper",
+  shortName: "ABP",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   description:
-    "The curated directory of Bangla media — every national daily, online news portal, FM radio station, ePaper, government portal, job site and regional newspaper, in one fast, premium index.",
+    "AllBanglaPaper is the curated directory of Bangla media — every national daily, online news portal, FM radio station, ePaper, government portal, job site and regional newspaper, in one fast index.",
   locale: "en_BD",
 } as const;
 

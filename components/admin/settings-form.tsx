@@ -89,7 +89,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
               required
               defaultValue={settings.site_name}
               error={fe.site_name}
-              placeholder="All Bangla Newspaper"
+              placeholder="All Bangla Paper"
               hint="হেডার, ফুটার, ব্রাউজার ট্যাব এবং ইমেইলে এই নামটি ব্যবহৃত হবে।"
             />
 
@@ -135,7 +135,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
               name="meta_title"
               defaultValue={settings.meta_title}
               error={fe.meta_title}
-              placeholder="যেমন: All Newspaper Bangla - বাংলাদেশের সব পত্রিকার ঠিকানা"
+              placeholder="যেমন: All Bangla Paper - বাংলাদেশের সব পত্রিকার ঠিকানা"
             />
             <TextArea
               label="মেটা ডেসক্রিপশন"
@@ -249,7 +249,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
                 name="smtp_from_name"
                 defaultValue={settings.smtp_from_name}
                 error={fe.smtp_from_name}
-                placeholder="যেমন: All Newspaper Bangla"
+                placeholder="যেমন: All Bangla Paper"
               />
             </div>
           </FormSection>

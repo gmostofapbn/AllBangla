@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
 import { ContentPage } from "@/components/site/content-page";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSiteSettings();
   return {
+    alternates: canonical("/about"),
     title: "About Us",
     description: `About ${s.site_name} — what this directory is and who it is for.`,
   };

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
 import { ContentPage } from "@/components/site/content-page";
+import { canonical } from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: canonical("/disclaimer"),
   title: "Disclaimer",
   description: "Terms under which the links and information on this site are provided.",
 };
