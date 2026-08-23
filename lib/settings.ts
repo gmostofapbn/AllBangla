@@ -119,7 +119,25 @@ export type SocialLink = {
   href: string;
 };
 
-/** Only the socials the admin actually filled in, in display order. */
+/**
+ * True when a URL points at an actual profile rather than a network's front
+ * page. "https://x.com/" is not a profile — linking one from the footer sends
+ * readers nowhere, and listing it in the Organization `sameAs` actively harms
+ * the brand signal, since Google uses those links to confirm identity.
+ */
+function isProfileUrl(value: string): boolean {
+  const raw = value.trim();
+  if (!raw) return false;
+  try {
+    const u = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    // Needs something after the host: /pagename, /@channel, /in/name …
+    return u.pathname.replace(/\/+$/, "").length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Only the socials the admin filled in with a real profile URL, in order. */
 export function socialLinks(s: Settings): SocialLink[] {
   const entries: { key: SocialLink["key"]; label: string; value: string }[] = [
     { key: "facebook", label: "Facebook", value: s.social_facebook },
@@ -129,7 +147,7 @@ export function socialLinks(s: Settings): SocialLink[] {
     { key: "youtube", label: "YouTube", value: s.social_youtube },
   ];
   return entries
-    .filter((e) => e.value.trim().length > 0)
+    .filter((e) => isProfileUrl(e.value))
     .map((e) => ({ key: e.key, label: e.label, href: e.value.trim() }));
 }
 
