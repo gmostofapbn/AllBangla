@@ -71,9 +71,42 @@ function collectFieldErrors(
   return out;
 }
 
-/** Refresh all ISR pages that render directory content. */
-function refreshDirectory() {
+/*
+ * Revalidation.
+ *
+ * `revalidatePath("/", "layout")` purges EVERY prerendered page — the homepage,
+ * all 22 category pages, the divisions, the blog and the content pages. The
+ * admin used to call it on every single action, so adding one outlet (of 487)
+ * invalidated the whole site and every page then re-rendered on its next hit,
+ * each one re-querying Supabase. That is a large burst of cache writes and
+ * function invocations per click, and it is what overwhelms the platform.
+ *
+ * So: purge the whole tree only for changes that genuinely affect every page,
+ * and otherwise touch just the pages that actually show the changed row.
+ */
+
+/** Everything — for changes that alter the shared header, footer or branding. */
+function refreshEverything() {
   revalidatePath("/", "layout");
+}
+
+/**
+ * The pages that show one outlet: the homepage section it appears in, its
+ * category page, and the divisional page when it belongs to a division.
+ */
+function refreshOutlet(categorySlug?: string | null) {
+  revalidatePath("/");
+  if (categorySlug) {
+    revalidatePath(`/category/${categorySlug}`);
+    revalidatePath(`/local/${categorySlug}`);
+  }
+}
+
+/** The pages that show a blog post. */
+function refreshPosts(slug?: string | null) {
+  revalidatePath("/");
+  revalidatePath("/blog");
+  if (slug) revalidatePath(`/blog/${slug}`);
 }
 
 /**
@@ -221,7 +254,7 @@ export async function upsertOutlet(
     return { error: "আউটলেটটি সংরক্ষণ করা যায়নি। সার্ভার লগ দেখুন।" };
   }
 
-  refreshDirectory();
+  refreshOutlet(data.category_slug);
   redirect(returnTo(formData, "/admin/outlets"));
 }
 
@@ -261,7 +294,13 @@ export async function moveOutlet(formData: FormData) {
         sb.from("outlets").update({ sort_order: (i + 1) * 10 }).eq("id", o.id),
       ),
     );
-    refreshDirectory();
+    // Reordering only changes the category this outlet sits in.
+    const { data: cat } = await sb
+      .from("categories")
+      .select("slug")
+      .eq("id", cur.category_id)
+      .maybeSingle();
+    refreshOutlet((cat as { slug?: string } | null)?.slug);
   }
   redirect(back);
 }
@@ -276,14 +315,16 @@ export async function deleteOutlet(formData: FormData) {
     // deleted newspaper leaves nothing behind in the project.
     const { data: row } = await sb
       .from("outlets")
-      .select("logo_url")
+      .select("logo_url, category:categories(slug)")
       .eq("id", id)
       .maybeSingle();
 
     const { error } = await sb.from("outlets").delete().eq("id", id);
     if (!error) {
       await deleteUploadedImage((row as { logo_url?: string | null } | null)?.logo_url);
-      refreshDirectory();
+      refreshOutlet(
+        (row as { category?: { slug?: string } | null } | null)?.category?.slug,
+      );
     } else {
       console.error("[admin] deleteOutlet failed:", error);
     }
@@ -364,7 +405,7 @@ export async function upsertCategory(
     return { error: "ক্যাটাগরিটি সংরক্ষণ করা যায়নি (slug হয়তো আগে থেকেই আছে)।" };
   }
 
-  refreshDirectory();
+  refreshEverything();
   if (missingHomeLimit) {
     return {
       error:
@@ -380,7 +421,8 @@ export async function deleteCategory(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   if (slug) {
     await supabaseAdmin().from("categories").delete().eq("slug", slug);
-    refreshDirectory();
+    // A category appears in the header menu and footer, so this one is global.
+    refreshEverything();
   }
   redirect("/admin/categories");
 }
@@ -416,7 +458,7 @@ export async function moveCategory(formData: FormData) {
         sb.from("categories").update({ sort_order: (i + 1) * 10 }).eq("slug", c.slug),
       ),
     );
-    refreshDirectory();
+    refreshEverything();
   }
   redirect("/admin/categories");
 }
@@ -448,7 +490,7 @@ export async function approveSubmission(formData: FormData) {
         sort_order: 999,
       });
       await sb.from("submissions").update({ status: "approved" }).eq("id", id);
-      refreshDirectory();
+      refreshOutlet(categorySlug);
     }
   } catch (e) {
     console.error("[admin] approveSubmission failed:", e);
@@ -553,7 +595,7 @@ export async function upsertPost(
     return { error: "পোস্টটি সংরক্ষণ করা যায়নি (slug হয়তো আগে থেকেই আছে)।" };
   }
 
-  revalidatePath("/", "layout");
+  refreshPosts(d.slug);
   redirect("/admin/posts");
 }
 
@@ -562,8 +604,10 @@ export async function deletePost(formData: FormData) {
   if (blocked) return;
   const id = String(formData.get("id") ?? "");
   if (id) {
-    await supabaseAdmin().from("posts").delete().eq("id", id);
-    revalidatePath("/", "layout");
+    const sb = supabaseAdmin();
+    const { data: row } = await sb.from("posts").select("slug").eq("id", id).maybeSingle();
+    await sb.from("posts").delete().eq("id", id);
+    refreshPosts((row as { slug?: string } | null)?.slug);
   }
   redirect("/admin/posts");
 }
@@ -576,7 +620,7 @@ export async function togglePostFeatured(formData: FormData) {
   const next = bool(formData, "next");
   if (id) {
     await supabaseAdmin().from("posts").update({ featured: next }).eq("id", id);
-    revalidatePath("/", "layout");
+    refreshPosts();
   }
   redirect("/admin/posts");
 }
@@ -609,7 +653,7 @@ export async function movePost(formData: FormData) {
         sb.from("posts").update({ sort_order: (i + 1) * 10 }).eq("id", p.id),
       ),
     );
-    revalidatePath("/", "layout");
+    refreshPosts();
   }
   redirect("/admin/posts");
 }
@@ -627,6 +671,7 @@ export async function updateGlobalSetting(formData: FormData) {
     await supabaseAdmin()
       .from("settings")
       .upsert({ key, value, updated_at: new Date().toISOString() });
-    refreshDirectory();
+    // Card behaviour is read by every outlet tile on every page.
+    refreshEverything();
   }
 }

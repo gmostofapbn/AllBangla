@@ -95,6 +95,8 @@ create table if not exists public.posts (
   published    boolean not null default false,
   featured     boolean not null default false,
   sort_order   int not null default 0,
+  -- Drives the "Popular posts" ranking; bumped by increment_post_click below.
+  click_count  bigint not null default 0,
   published_at timestamptz,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -164,6 +166,17 @@ as $$
 $$;
 
 grant execute on function public.increment_click(uuid) to anon, authenticated;
+
+create or replace function public.increment_post_click(post_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.posts set click_count = click_count + 1 where id = post_id;
+$$;
+
+grant execute on function public.increment_post_click(uuid) to anon, authenticated;
 
 -- ---------- Row Level Security ----------------------------------------------
 -- The service-role key (server-only) bypasses RLS for all admin writes.

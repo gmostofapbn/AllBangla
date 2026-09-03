@@ -19,6 +19,10 @@ import { DEFAULT_HOME_LIMIT, type GroupKey } from "@/lib/site-config";
 const OUTLET_PUBLIC_COLS =
   "id, slug, name, name_bn, url, logo_url, is_featured, open_external, sort_order, is_active, category:categories(slug)";
 
+/** Same columns, but an inner join so the category slug can be filtered on. */
+const OUTLET_CATEGORY_COLS =
+  "id, slug, name, name_bn, url, logo_url, is_featured, open_external, sort_order, is_active, category:categories!inner(slug)";
+
 const POST_CARD_COLS =
   "id, slug, title, excerpt, cover_image, published, featured, sort_order, click_count, published_at, created_at, updated_at";
 
@@ -120,10 +124,32 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
   return (await getAllCategories()).find((c) => c.slug === slug);
 }
 
+/**
+ * Active outlets in one category, in display order.
+ *
+ * A single indexed query on `outlets(category_id, sort_order)` via an inner
+ * join on the category slug. This used to load every outlet in the directory
+ * (487 and growing) and filter in JavaScript, on each of the 22 category pages.
+ */
 export async function getOutletsByCategory(slug: string): Promise<Outlet[]> {
-  return (await getAllOutlets())
-    .filter((o) => o.category_slug === slug)
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  const db = supabasePublic();
+  if (db) {
+    try {
+      const { data, error } = await db
+        .from("outlets")
+        .select(OUTLET_CATEGORY_COLS)
+        .eq("is_active", true)
+        .eq("category.slug", slug)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      if (data) return data.map(normOutlet);
+    } catch (e) {
+      console.warn("[queries] outlets-by-category read failed, using seed:", e);
+    }
+  }
+  return SEED_OUTLETS.filter((o) => o.is_active !== false && o.category_slug === slug).sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
 }
 
 export async function getDivisions(): Promise<Category[]> {
@@ -449,12 +475,37 @@ export type CategoryCount = {
 };
 
 /** Main (non-division) categories with active-outlet counts, for shortcuts + sidebar. */
-export async function getCategoriesWithCounts(): Promise<CategoryCount[]> {
-  const [cats, outlets] = await Promise.all([getAllCategories(), getAllOutlets()]);
-  const counts = new Map<string, number>();
-  for (const o of outlets) {
-    counts.set(o.category_slug, (counts.get(o.category_slug) ?? 0) + 1);
+/**
+ * Outlet count per category slug, aggregated by Postgres.
+ *
+ * Reads the `category_outlet_counts` view rather than pulling every outlet row
+ * back to count them here — the blog sidebar renders this on every article.
+ */
+const fetchOutletCounts = cache(async (): Promise<Map<string, number>> => {
+  const out = new Map<string, number>();
+  const db = supabasePublic();
+  if (db) {
+    try {
+      const { data, error } = await db
+        .from("category_outlet_counts")
+        .select("slug, active_count");
+      if (error) throw error;
+      for (const r of (data ?? []) as { slug: string; active_count: number }[]) {
+        out.set(r.slug, r.active_count ?? 0);
+      }
+      return out;
+    } catch (e) {
+      console.warn("[queries] outlet counts read failed, falling back:", e);
+    }
   }
+  for (const o of SEED_OUTLETS.filter((x) => x.is_active !== false)) {
+    out.set(o.category_slug, (out.get(o.category_slug) ?? 0) + 1);
+  }
+  return out;
+});
+
+export async function getCategoriesWithCounts(): Promise<CategoryCount[]> {
+  const [cats, counts] = await Promise.all([getAllCategories(), fetchOutletCounts()]);
   return cats
     .filter((c) => !c.parent_slug && c.slug !== "local-newspaper")
     .sort((a, b) => a.sort_order - b.sort_order)
