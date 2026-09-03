@@ -137,7 +137,12 @@ function isProfileUrl(value: string): boolean {
   }
 }
 
-/** Only the socials the admin filled in with a real profile URL, in order. */
+/**
+ * Every social link the admin filled in, in display order — this drives the
+ * footer icons, so anything non-empty shows. `profileLinks` below is the
+ * stricter list used for schema.org `sameAs`, where a bare network homepage is
+ * a bad identity signal rather than merely a weak link.
+ */
 export function socialLinks(s: Settings): SocialLink[] {
   const entries: { key: SocialLink["key"]; label: string; value: string }[] = [
     { key: "facebook", label: "Facebook", value: s.social_facebook },
@@ -147,8 +152,13 @@ export function socialLinks(s: Settings): SocialLink[] {
     { key: "youtube", label: "YouTube", value: s.social_youtube },
   ];
   return entries
-    .filter((e) => isProfileUrl(e.value))
+    .filter((e) => e.value.trim().length > 0)
     .map((e) => ({ key: e.key, label: e.label, href: e.value.trim() }));
+}
+
+/** Only links that point at a real profile — for Organization.sameAs. */
+export function profileLinks(s: Settings): SocialLink[] {
+  return socialLinks(s).filter((l) => isProfileUrl(l.href));
 }
 
 /** Split a textarea into paragraphs on blank lines, as the admin hint promises. */

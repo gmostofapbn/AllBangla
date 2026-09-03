@@ -44,9 +44,9 @@ export function ContentPage({
 
   return (
     <>
-      <PageHero
-        title={title}
-      />
+      {/* narrow: the title sat in a 7xl container above a 3xl body column, so
+          it hung well to the left of its own text. */}
+      <PageHero title={title} narrow />
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         {rich ? (
           <div className={PROSE} dangerouslySetInnerHTML={{ __html: content }} />

@@ -16,15 +16,18 @@ export function PageHero({
   title,
   titleBn,
   description,
+  narrow = false,
 }: {
   breadcrumb?: Crumb[];
   title: string;
   titleBn?: string | null;
   description?: string | null;
+  /** Match a narrower body column so the heading is not stranded far left. */
+  narrow?: boolean;
 }) {
   return (
     <section className="border-b border-line bg-surface">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
+      <div className={`mx-auto ${narrow ? "max-w-3xl" : "max-w-7xl"} px-4 py-6 sm:px-6 sm:py-7 lg:px-8`}>
         {breadcrumb && breadcrumb.length > 0 && (
           <nav aria-label="Breadcrumb" className="mb-3">
             <ol className="flex flex-wrap items-center gap-1 text-sm text-muted">
@@ -56,7 +59,7 @@ export function PageHero({
         </h1>
 
         {description && (
-          <p className="mt-2.5 max-w-3xl text-sm leading-relaxed text-muted">
+          <p className="mt-2.5 text-sm leading-relaxed text-muted">
             {description}
           </p>
         )}

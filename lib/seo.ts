@@ -1,5 +1,5 @@
 import { SITE } from "@/lib/site-config";
-import { socialLinks, type Settings } from "@/lib/settings";
+import { profileLinks, type Settings } from "@/lib/settings";
 
 /**
  * Canonical URLs and JSON-LD structured data.
@@ -38,7 +38,7 @@ const ORG_ID = () => `${absoluteUrl()}/#organization`;
 const SITE_ID = () => `${absoluteUrl()}/#website`;
 
 export function organizationSchema(s: Settings): Json {
-  const sameAs = socialLinks(s).map((l) => l.href);
+  const sameAs = profileLinks(s).map((l) => l.href);
   return {
     "@type": "Organization",
     "@id": ORG_ID(),
