@@ -2,7 +2,15 @@ import {
   getHomeSections,
   getHomePosts,
   getDefaultOpenExternal,
+  getOutletTotal,
 } from "@/lib/queries";
+import { getSiteSettings } from "@/lib/settings";
+import { homeFaqs } from "@/lib/faq";
+import { HomeIntro } from "@/components/site/home-intro";
+import { FaqList } from "@/components/site/faq";
+import { JsonLd } from "@/components/site/json-ld";
+import { collectionSchema, faqSchema, jsonLdGraph } from "@/lib/seo";
+import { SITE } from "@/lib/site-config";
 import { SectionHeader } from "@/components/site/section-header";
 import { OutletGrid } from "@/components/site/outlet-grid";
 import { DivisionTiles } from "@/components/site/division-tiles";
@@ -11,14 +19,39 @@ import { BlogGrid } from "@/components/site/blog-grid";
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [sections, homePosts, globalOpenExternal] = await Promise.all([
-    getHomeSections(),
-    getHomePosts(3),
-    getDefaultOpenExternal(),
-  ]);
+  const [sections, homePosts, globalOpenExternal, outletTotal, settings] =
+    await Promise.all([
+      getHomeSections(),
+      getHomePosts(3),
+      getDefaultOpenExternal(),
+      getOutletTotal(),
+      getSiteSettings(),
+    ]);
+
+  const siteName = settings.site_name || SITE.name;
+  const faqs = homeFaqs(outletTotal);
+
+  // The outlets actually on the page, in the order they appear. Schema that
+  // lists items the visitor cannot see is the kind Google discounts.
+  const listed = sections.flatMap((s) =>
+    s.outlets.map((o) => ({ name: o.name, url: o.url })),
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-12 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <JsonLd
+        data={jsonLdGraph(
+          collectionSchema({
+            name: `${siteName} - every Bangladeshi newspaper in one place`,
+            description: settings.meta_description || SITE.description,
+            path: "/",
+            items: listed,
+          }),
+          faqSchema(faqs),
+        )}
+      />
+
+      <HomeIntro siteName={siteName} outletCount={outletTotal} />
       {sections.map(({ category, outlets, total, children }) => {
         // Division row (Local Newspapers)
         if (category.section_type === "division_grid") {
@@ -77,6 +110,8 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <FaqList items={faqs} heading="Frequently asked questions" />
     </div>
   );
 }

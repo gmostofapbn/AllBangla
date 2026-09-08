@@ -474,6 +474,30 @@ export type CategoryCount = {
   count: number;
 };
 
+/**
+ * How many active outlets the directory holds, counted by Postgres.
+ *
+ * `head: true` with an exact count returns the number in the Content-Range
+ * header without shipping a single row - the home page needs the figure for its
+ * intro copy and FAQ, not the records.
+ */
+export const getOutletTotal = cache(async (): Promise<number> => {
+  const db = supabasePublic();
+  if (db) {
+    try {
+      const { count, error } = await db
+        .from("outlets")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
+      if (error) throw error;
+      if (typeof count === "number") return count;
+    } catch (e) {
+      console.warn("[queries] outlet total read failed, falling back:", e);
+    }
+  }
+  return SEED_OUTLETS.length;
+});
+
 /** Main (non-division) categories with active-outlet counts, for shortcuts + sidebar. */
 /**
  * Outlet count per category slug, aggregated by Postgres.
