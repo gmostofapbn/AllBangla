@@ -21,7 +21,7 @@ export function HomeIntro({
       <h1 className="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl">
         {siteName} — সকল বাংলা সংবাদপত্র এক ঠিকানায়
       </h1>
-      <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-muted">
+      <p className="mt-3 max-w-3xl text-justify hyphens-auto text-[15px] leading-relaxed text-muted">
         Read any Bangladeshi newspaper from a single page. {siteName} gathers{" "}
         {outletCount} Bangla dailies, English newspapers, online news portals,
         ePaper editions, magazines, TV news channels, FM radio stations and job
