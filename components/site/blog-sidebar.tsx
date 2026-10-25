@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { optimizable } from "@/lib/image-src";
 import { Newspaper, Eye, Clock, Flame, FolderOpen } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { PostCard } from "@/lib/types";
@@ -113,6 +114,7 @@ function PostRow({ post, showViews }: { post: PostCard; showViews?: boolean }) {
           {post.cover_image ? (
             <Image
               src={post.cover_image}
+              unoptimized={!optimizable(post.cover_image)}
               alt={post.title}
               fill
               sizes="80px"

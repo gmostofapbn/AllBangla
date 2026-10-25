@@ -4,7 +4,7 @@ import { PageHero } from "@/components/site/page-hero";
 import { CategoryFilter } from "@/components/site/category-filter";
 import { canonical } from "@/lib/seo";
 
-export const revalidate = 3600;
+export const revalidate = 604800; // a week; admin edits refresh on demand
 
 export const metadata: Metadata = {
   alternates: canonical("/epaper"),

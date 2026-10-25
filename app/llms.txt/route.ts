@@ -2,7 +2,7 @@ import { getAllCategories, getOutletTotal } from "@/lib/queries";
 import { getSiteSettings } from "@/lib/settings";
 import { SITE } from "@/lib/site-config";
 
-export const revalidate = 3600;
+export const revalidate = 604800; // a week; admin edits refresh on demand
 
 /**
  * Category descriptions are full SEO copy - 150 words each. Whole, they would

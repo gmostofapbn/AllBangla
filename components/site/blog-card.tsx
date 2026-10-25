@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { optimizable } from "@/lib/image-src";
 import { Newspaper, Calendar, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { PostCard } from "@/lib/types";
@@ -15,6 +16,7 @@ export function BlogCard({ post }: { post: PostCard }) {
         {post.cover_image ? (
           <Image
             src={post.cover_image}
+            unoptimized={!optimizable(post.cover_image)}
             alt={post.title}
             fill
             sizes="(max-width: 640px) 100vw, 380px"
